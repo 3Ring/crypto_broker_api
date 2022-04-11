@@ -2,6 +2,8 @@
 FROM python:3.8-slim-buster
 
 WORKDIR /crypto
+COPY setup.py .
+RUN pip install -e .
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt

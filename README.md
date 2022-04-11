@@ -44,4 +44,11 @@
    1. This could allow us to use that crypto/currency until then.
    1. I don't have a professional background in finance/banking, so I don't know of the legal implications of this model
 
+**How to run tests:**
 
+1. In Linux From the root of this repo:
+   1. Create python virtual environment: `python -m venv crypto`
+   1. Activate the venv: `source crypto/scripts/activate`
+   1. Install dependencies: `pip install -r requirements.txt`
+   1. Navigate to the tests folder: `cd tests`
+   1. Run Pytest: `pytest`
