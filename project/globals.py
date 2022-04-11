@@ -1,0 +1,1 @@
+ACCEPTED_SYMBOLS = ["BTC", "ETH", "DOGE", "USDT", "BNB"]

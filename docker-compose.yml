@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+    crypto_host:
+        image: postgres:13.4
+        container_name: crypto_host
+        restart: on-failure
+        volumes:
+            - crypto_volume:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=${SQL_ROOT_PASSWORD:-unsecured_password}
+        ports:
+            - 5432:5432
+        cap_add:
+            - SYS_NICE # CAP_SYS_NICE (gives sql cpu priority)
+    rest-server:
+        build:
+            context: .
+        container_name: rest-server
+        restart: on-failure
+        ports:
+            - 5000:5000
+        volumes:
+            - ./:/crypto
+volumes:
+    crypto_volume:
+        name: crypto_volume
+
+networks:
+    default:
+        name: crypto_back
+        driver: bridge
