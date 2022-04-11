@@ -79,21 +79,27 @@ def buy(id: int, symbol: str, usd_amount: int):
     return "", 204
 
 
-@api.route("/sell/<int:id>/<symbol>/<float:currency_amount>", methods=["POST"])
-def sell(id: int, symbol: str, currency_amount: float):
+@api.route("/sell/<int:id>/<symbol>/<float:currency_amount>/<key>", methods=["POST"])
+def sell(id: int, symbol: str, currency_amount: float, key: str):
     """Sell: for a given User, sell a selected Currency"""
     with db_session():
         user = Users.query.with_for_update().get(id)
         try:
+            order = Transactions.query.filter_by(inc_key=key).first()
+            assert order is None
+        except AssertionError:
+            return error_response(401, "Sell order already submitted")
+        try:
             verify_currency(user, symbol, currency_amount)
             usd = convert_to_usd(currency_amount, symbol)
             setattr(user, symbol, getattr(user, symbol) - currency_amount)
-
             Transactions.create(
                 usd_amount=-usd,
                 user_id=user.id,
+                inc_key=key,
                 client_id=int(request.headers.get("client_id")),
             )
+
         except InvalidSymbolError:
             return error_response(404, f"'{symbol}' is not a valid symbol")
         except InsufficientCurrencyError as e:

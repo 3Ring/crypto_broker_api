@@ -1,3 +1,4 @@
+import math
 from contextlib import contextmanager
 from typing import Tuple
 
@@ -33,7 +34,7 @@ from project.models import Users, Transactions
 
 
 @contextmanager
-def transaction(transaction_id: int, usd_amount: int, user_id: int) -> Transactions:
+def transaction(transaction_id: int, usd_amount: float, user_id: int) -> Transactions:
     """Verifies and completes transaction"""
     transaction = Transactions.query.with_for_update().get(transaction_id)
     if transaction is None:
@@ -46,7 +47,7 @@ def transaction(transaction_id: int, usd_amount: int, user_id: int) -> Transacti
     transaction.completed()
 
 
-def convert_to_crypto(usd: int, symbol: str) -> float:
+def convert_to_crypto(usd: float, symbol: str) -> float:
     """converts usd amounts to crypto.
 
     in a real application this would be though an API
@@ -63,9 +64,10 @@ def convert_to_crypto(usd: int, symbol: str) -> float:
         "BNB": 0.00234261,
     }
     return usd * conversion[symbol]
+ 
 
 
-def convert_to_usd(amount: float, symbol: str) -> int:
+def convert_to_usd(amount: float, symbol: str) -> float:
     """converts crypto to usd
 
     in a real application this would be though an API
@@ -82,7 +84,7 @@ def convert_to_usd(amount: float, symbol: str) -> int:
         "USDT": 1,
         "BNB": 0.00234261,
     }
-    return int(amount / conversion[symbol] * 100)
+    return amount / conversion[symbol]
 
 
 def error_response(status_code: int, message=None) -> Tuple[str, str]:

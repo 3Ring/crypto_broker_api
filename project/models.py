@@ -98,18 +98,18 @@ class Transactions(db.Model):
     __tablename__ = "transactions"
 
     id = db.Column(db.Integer, primary_key=True)
-    usd_amount = db.Column(db.Integer)
+    usd_amount = db.Column(db.Float)
     inc_time = db.Column(db.DateTime, default=datetime.utcnow())
     complete_time = db.Column(db.DateTime)
     complete = db.Column(db.Boolean, default=False)
-
+    inc_key = db.Column(db.String)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
 
     @classmethod
-    def create(cls, usd_amount: int, user_id: int, client_id: int):
+    def create(cls, usd_amount: int, user_id: int, client_id: int, inc_key: str):
         """creates and adds new transaction to the database"""
-        new = cls(usd_amount=usd_amount, user_id=user_id, client_id=client_id)
+        new = cls(usd_amount=usd_amount, user_id=user_id, client_id=client_id, inc_key=inc_key)
         db.session.add(new)
         return new
 

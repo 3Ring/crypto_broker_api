@@ -71,10 +71,14 @@ def send_user(
 
 
 def send_transaction(
-    usd_amount: int, user_id: int, client_id: int, autocommit=True
+    usd_amount: float,
+    user_id: int,
+    client_id: int,
+    inc_key: str = None,
+    autocommit=True,
 ) -> Transactions:
     tran = Transactions.create(
-        usd_amount=usd_amount, user_id=user_id, client_id=client_id
+        usd_amount=usd_amount, user_id=user_id, client_id=client_id, inc_key=inc_key
     )
     if autocommit == True:
         db.session.commit()

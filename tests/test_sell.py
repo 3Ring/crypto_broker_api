@@ -1,3 +1,5 @@
+import secrets
+
 from flask.testing import FlaskClient
 
 from project.app import db
@@ -22,7 +24,8 @@ def test_client_can_sell_currency(mock: FlaskClient):
     }
     for sym in ACCEPTED_SYMBOLS:
         for sell in [0.01, 0.05, 0.1, 0.19, 1.99]:
-            url = f"/sell/{assets['user']['id']}/{sym}/{sell}"
+            token = secrets.token_urlsafe()
+            url = f"/sell/{assets['user']['id']}/{sym}/{sell}/{token}"
             ret = mock.post(url, headers=headers)
             assert ret.status_code == 204
             user = Users.query.get(assets["user"]["id"])

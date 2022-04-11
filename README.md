@@ -28,7 +28,7 @@
   - Only 5 currencies are brokered: ["BTC", "ETH", "DOGE", "USDT", "BNB"].
   - All transactions will be using $USD.
   - User/Client accounts do not need to be created or deleted and will be assumed to be handled in a different api.
-  - There is an infinite amount of the currencies to be purchased
+  - There is an infinite amount of the currency to be purchased
 
 - Currency list:
   - Since this specifies 'for a given user', I'm not exactly sure how this is different from balances.  I am going to go with the assumption that specific users will have to be preauthorized to trade in specific currencies, so I added an authorization row for each currency to the database.
@@ -37,7 +37,7 @@
 
 **Additional Thoughts:**
 
-1. A potential problem could arise if connection is lost mid-request.
+1. A "Two generals" bug could arise if connection is lost mid-request. Currently this is handled by tracking transactions and unique Client keys, but is still possible in a scaled environment.
    1. This could lead to a mismatch in records. Ways to mitigate this could be through using websockets instead of REST. This would allow for multiple checks back and forth before executing the orders. It could scale more efficiently in this use case as the Clients could have permanent connections that the users funnel through. The downside of this approach is that it would require clients to all have frameworks on their side that can support it.
    1. Another option would be to return a confirmation key(s) and require that the Clients send them to other internal routes to confirm the request. This would add another layer of security, but would also be less efficient
 1. Due to the nature of purchasing crypto-currencies each of these purchases would be more of an order or promise. Where we would be saying that we were going to do the transfer for the client, but for it not to be guaranteed until a future date.
