@@ -108,7 +108,6 @@ def test_no_payment(mock: FlaskClient):
     }
     url = f"/buy/{assets['user']['id']}/BTC/1.0"
     ret = mock.post(url, headers=headers)
-    print(f'ret.data: {ret.data}')
     assert ret.status_code == 401
     assert b'Transaction not found' in ret.data
 
