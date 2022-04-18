@@ -51,8 +51,8 @@ def currency_list(id):
     return jsonify(Users.query.get_or_404(id).auth_to_dict()), 200
 
 
-@api.route("/buy/<int:id>/<symbol>/<int:usd_amount>", methods=["POST"])
-def buy(id: int, symbol: str, usd_amount: int):
+@api.route("/buy/<int:id>/<symbol>/<float:usd_amount>", methods=["POST"])
+def buy(id: int, symbol: str, usd_amount: float):
     """Buy: For a given User, buy a selected Currency"""
 
     with db_session():
@@ -79,30 +79,38 @@ def buy(id: int, symbol: str, usd_amount: int):
     return "", 204
 
 
-@api.route("/sell/<int:id>/<symbol>/<float:currency_amount>/<key>", methods=["POST"])
-def sell(id: int, symbol: str, currency_amount: float, key: str):
+@api.route("/sell/<int:user_id>/<symbol>/<float:currency_amount>", methods=["POST"])
+def sell(user_id: int, symbol: str, currency_amount: float):
     """Sell: for a given User, sell a selected Currency"""
     with db_session():
-        user = Users.query.with_for_update().get(id)
         try:
-            order = Transactions.query.filter_by(inc_key=key).first()
+            transaction_id = request.headers.get("transaction_id")
+            if transaction_id is None:
+                raise ValueError
+        except ValueError:
+            return bad_request("'transaction_id' header required")
+        user = Users.query.with_for_update().get(user_id)
+        try:
+            order = Transactions.query.filter_by(inc_key=transaction_id).first()
             assert order is None
         except AssertionError:
             return error_response(401, "Sell order already submitted")
         try:
+            user.allowed_currency(symbol)
             verify_currency(user, symbol, currency_amount)
             usd = convert_to_usd(currency_amount, symbol)
             setattr(user, symbol, getattr(user, symbol) - currency_amount)
             Transactions.create(
                 usd_amount=-usd,
                 user_id=user.id,
-                inc_key=key,
+                inc_key=transaction_id,
                 client_id=int(request.headers.get("client_id")),
             )
-
         except InvalidSymbolError:
             return error_response(404, f"'{symbol}' is not a valid symbol")
         except InsufficientCurrencyError as e:
+            return error_response(401, f"{e}")
+        except UnauthorizedCurrencyError as e:
             return error_response(401, f"{e}")
     return "", 204
 

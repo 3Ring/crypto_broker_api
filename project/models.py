@@ -26,12 +26,12 @@ class Users(db.Model):
     def purchase(self, symbol: str, usd_amount: float):
         from project.helpers import convert_to_crypto
         """This is in place of a purchasing API"""
-        self._allowed_currency(symbol)
+        self.allowed_currency(symbol)
         current = getattr(self, symbol)
         new = convert_to_crypto(usd_amount, symbol)
         setattr(self, symbol, current + new)
 
-    def _allowed_currency(self, symbol: str):
+    def allowed_currency(self, symbol: str):
         """Checks that the user is allowed to trade in the currency"""
         from project.exceptions import InvalidSymbolError, UnauthorizedCurrencyError
         try:

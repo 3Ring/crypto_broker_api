@@ -11,7 +11,7 @@ def test_client_can_buy_currency(mock: FlaskClient):
     expected = {}
     for sym in ACCEPTED_SYMBOLS:
         expected[sym] = assets["user"][sym]
-        for buy in [1, 10, 100, 1000, 99_999]:
+        for buy in [.01, 0.1, 1.00, 10.00, 99_999.99]:
             tran = send_transaction(buy, assets["user"]["id"], assets["client"]["id"])
             headers = {
                 "client_id": assets["client"]["id"],
@@ -37,13 +37,14 @@ def test_invalid_methods(mock: FlaskClient):
         "authorization": assets["client"]["key"],
         "transaction_id": tran.id,
     }
-    url = f"/buy/{assets['user']['id']}/BTC/1"
+    url = f"/buy/{assets['user']['id']}/BTC/1.0"
     success = mock.post(url, headers=headers)
     assert success.status_code == 204
     for method in ["get", "put", "delete"]:
         call = getattr(mock, method)
         ret = call(url, headers=headers)
         assert ret.status_code == 405
+        assert b'method is not allowed' in ret.data
 
 
 def test_missing_args(mock: FlaskClient):
@@ -56,12 +57,12 @@ def test_missing_args(mock: FlaskClient):
         "transaction_id": tran.id,
     }
     urls = [
-        f"/buy/{assets['user']['id']}/BTC/",
-        f"/buy/{assets['user']['id']}//1",
-        f"/buy//BTC/1",
         f"/buy",
         f"/buy/{assets['user']['id']}",
-        f"/buy/{assets['user']['id']}/BTC",
+        f"/buy/{assets['user']['id']}/BTC/",
+        f"/buy//BTC/1",
+        f"/buy/{assets['user']['id']}//1.0",
+        f"/buy/{assets['user']['id']}/BTC/",
     ]
     for url in urls:
         ret = mock.post(url, headers=headers)
@@ -90,10 +91,11 @@ def test_missing_headers(mock: FlaskClient):
             "authorization": assets["client"]["key"],
         },
     ]
-    url = f"/buy/{assets['user']['id']}/BTC/1"
+    url = f"/buy/{assets['user']['id']}/BTC/1.0"
     for headers in headers_list:
         ret = mock.post(url, headers=headers)
         assert ret.status_code == 400
+        assert b'header required' in ret.data
 
 
 def test_no_payment(mock: FlaskClient):
@@ -102,10 +104,13 @@ def test_no_payment(mock: FlaskClient):
     headers = {
         "client_id": assets["client"]["id"],
         "authorization": assets["client"]["key"],
+        "transaction_id": 10000,
     }
-    url = f"/buy/{assets['user']['id']}/BTC/1"
+    url = f"/buy/{assets['user']['id']}/BTC/1.0"
     ret = mock.post(url, headers=headers)
-    assert ret.status_code == 400
+    print(f'ret.data: {ret.data}')
+    assert ret.status_code == 401
+    assert b'Transaction not found' in ret.data
 
 
 def test_duplicate_transaction(mock: FlaskClient):
@@ -117,11 +122,12 @@ def test_duplicate_transaction(mock: FlaskClient):
         "authorization": assets["client"]["key"],
         "transaction_id": tran.id,
     }
-    url = f"/buy/{assets['user']['id']}/BTC/1"
+    url = f"/buy/{assets['user']['id']}/BTC/1.0"
     success = mock.post(url, headers=headers)
     assert success.status_code == 204
     fail = mock.post(url, headers=headers)
     assert fail.status_code == 401
+    assert b"Already completed." in fail.data
 
 
 def test_payment_attached_to_different_user(mock: FlaskClient):
@@ -134,9 +140,10 @@ def test_payment_attached_to_different_user(mock: FlaskClient):
         "authorization": assets["client"]["key"],
         "transaction_id": tran.id,
     }
-    url = f"/buy/{user['id']}/BTC/1"
+    url = f"/buy/{user['id']}/BTC/1.0"
     wrong_user = mock.post(url, headers=headers)
     assert wrong_user.status_code == 401
+    assert b'Transaction details do not match' in wrong_user.data
 
 
 def test_invalid_token(mock: FlaskClient):
@@ -148,9 +155,10 @@ def test_invalid_token(mock: FlaskClient):
         "authorization": assets["client"]["key"] + "wrong",
         "transaction_id": tran.id,
     }
-    url = f"/buy/{assets['user']['id']}/BTC/1"
+    url = f"/buy/{assets['user']['id']}/BTC/1.0"
     bad_token = mock.post(url, headers=headers)
     assert bad_token.status_code == 401
+    assert b"invalid API key" in bad_token.data
 
 
 def test_unsupported_currency(mock: FlaskClient):
@@ -162,9 +170,10 @@ def test_unsupported_currency(mock: FlaskClient):
         "authorization": assets["client"]["key"],
         "transaction_id": tran.id,
     }
-    url = f"/buy/{assets['user']['id']}/WRONG/1"
+    url = f"/buy/{assets['user']['id']}/WRONG/1.0"
     bad_symbol = mock.post(url, headers=headers)
     assert bad_symbol.status_code == 404
+    assert b"not a valid symbol" in bad_symbol.data
 
 
 def test_user_is_not_authorized_for_currency(mock: FlaskClient):
@@ -184,6 +193,7 @@ def test_user_is_not_authorized_for_currency(mock: FlaskClient):
             "authorization": assets["client"]["key"],
             "transaction_id": tran.id,
         }
-        url = f"/buy/{user['id']}/{sym}/1"
+        url = f"/buy/{user['id']}/{sym}/1.0"
         not_authorized = mock.post(url, headers=headers)
         assert not_authorized.status_code == 401
+        assert b"not authorized to purchase" in not_authorized.data

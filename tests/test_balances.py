@@ -5,7 +5,7 @@ from tests.helpers import fill_mock, send_transaction
 
 # Happy path
 def test_balance_is_accurate(mock: FlaskClient):
-    AMOUNT = 1000
+    AMOUNT = 10.00
     assets = fill_mock()
     headers = {
         "client_id": assets["client"]["id"],
