@@ -6,7 +6,7 @@ from project.app import db
 from project.globals import ACCEPTED_SYMBOLS
 from project.helpers import convert_to_crypto
 from project.models import Users
-from tests.helpers import fill_mock, send_transaction, send_user
+from tests.helpers import fill_mock
 
 # Happy path
 def test_client_can_sell_currency(mock: FlaskClient):
@@ -57,7 +57,7 @@ def test_invalid_methods(mock: FlaskClient):
         assert b'method is not allowed' in ret.data
 
 def test_missing_headers(mock: FlaskClient):
-    print('TODO: test_missing_headers')
+    print('test_missing_headers')
     assets = fill_mock()
     user = Users.query.with_for_update().get(assets["user"]["id"])
     user.BTC = convert_to_crypto(1_000_000.00, "BTC")
@@ -163,7 +163,7 @@ def test_invalid_token(mock: FlaskClient):
     assert b"invalid API key" in bad_token.data
 
 def test_user_is_not_authorized_for_currency(mock: FlaskClient):
-    print('TODO: test_user_is_not_authorized_for_currency')
+    print('test_user_is_not_authorized_for_currency')
     assets = fill_mock()
     user = Users.query.with_for_update().get(assets["user"]["id"])
     AMOUNT = 1_000_000.00

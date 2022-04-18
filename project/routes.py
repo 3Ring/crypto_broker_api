@@ -47,8 +47,10 @@ def check_api_key():
 @api.route("/list/<int:id>", methods=["GET"])
 def currency_list(id):
     """Currency list: For a given user, get the curriencies they can transact"""
-
-    return jsonify(Users.query.get_or_404(id).auth_to_dict()), 200
+    user = Users.query.get_or_404(id)
+    if user.client_id != request.headers.get("client_id", type=int):
+        return error_response(401, "unauthorized client")
+    return jsonify(user.auth_to_dict()), 200
 
 
 @api.route("/buy/<int:id>/<symbol>/<float:usd_amount>", methods=["POST"])
