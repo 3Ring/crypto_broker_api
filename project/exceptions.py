@@ -6,7 +6,8 @@ class InvalidTokenError(Exception):
     pass
 class InvalidSymbolError(Exception):
     pass
-
+class MissingHeaderError(Exception):
+    pass
 class InsufficientCurrencyError(Exception):
     from project.models import Users
     def __init__(self, user: Users, symbol: str, amount: float, *args: object) -> None:

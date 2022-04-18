@@ -8,6 +8,7 @@ from project.exceptions import (
     TransactionMismatchError,
     TransactionNotFoundError,
     UnauthorizedCurrencyError,
+    MissingHeaderError,
 )
 from project.helpers import (
     convert_to_usd,
@@ -28,14 +29,14 @@ def check_api_key():
     try:
         client_id = request.headers.get("client_id", type=int)
         if client_id is None:
-            raise ValueError
-    except (ValueError, TypeError):
+            raise MissingHeaderError
+    except (MissingHeaderError, TypeError):
         return bad_request("'client_id' header required")
     try:
         auth = request.headers.get("authorization", type=str)
         if auth is None:
-            raise ValueError
-    except ValueError:
+            raise MissingHeaderError
+    except MissingHeaderError:
         return bad_request("'Authorization' header required")
     client = Clients.query.get_or_404(client_id)
     try:
@@ -61,8 +62,8 @@ def buy(id: int, symbol: str, usd_amount: float):
         try:
             transaction_id = request.headers.get("transaction_id")
             if transaction_id is None:
-                raise ValueError
-        except ValueError:
+                raise MissingHeaderError
+        except MissingHeaderError:
             return bad_request("'transaction_id' header required")
         try:
             user = Users.query.with_for_update().get_or_404(id)
@@ -90,8 +91,8 @@ def sell(user_id: int, symbol: str, currency_amount: float):
         try:
             transaction_id = request.headers.get("transaction_id")
             if transaction_id is None:
-                raise ValueError
-        except ValueError:
+                raise MissingHeaderError
+        except MissingHeaderError:
             return bad_request("'transaction_id' header required")
         user = Users.query.with_for_update().get(user_id)
         if user.client_id != request.headers.get("client_id", type=int):
@@ -124,4 +125,7 @@ def sell(user_id: int, symbol: str, currency_amount: float):
 @api.route("/balances/<int:id>", methods=["GET"])
 def balances(id):
     """Balances: For a given User, get a list of Balances"""
-    return jsonify(Users.query.get_or_404(id).balance_to_dict()), 200
+    user = Users.query.get_or_404(id)
+    if user.client_id != request.headers.get("client_id", type=int):
+        return error_response(401, "unauthorized client")
+    return jsonify(user.balance_to_dict()), 200
