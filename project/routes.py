@@ -66,6 +66,8 @@ def buy(id: int, symbol: str, usd_amount: float):
             return bad_request("'transaction_id' header required")
         try:
             user = Users.query.with_for_update().get_or_404(id)
+            if user.client_id != request.headers.get("client_id", type=int):
+                return error_response(401, "unauthorized client")
             with transaction(transaction_id, usd_amount, user.id):
                 user.purchase(symbol, usd_amount)
         except InvalidSymbolError:
@@ -92,6 +94,8 @@ def sell(user_id: int, symbol: str, currency_amount: float):
         except ValueError:
             return bad_request("'transaction_id' header required")
         user = Users.query.with_for_update().get(user_id)
+        if user.client_id != request.headers.get("client_id", type=int):
+            return error_response(401, "unauthorized client")
         try:
             order = Transactions.query.filter_by(inc_key=transaction_id).first()
             assert order is None

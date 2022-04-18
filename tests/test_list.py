@@ -1,9 +1,6 @@
 from flask.testing import FlaskClient
 
 from tests.helpers import fill_mock
-from project.app import db
-from project.helpers import convert_to_crypto
-from project.models import Users
 
 # Happy Path
 def test_can_get_list(mock: FlaskClient):
