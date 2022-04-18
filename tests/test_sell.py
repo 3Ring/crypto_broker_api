@@ -32,3 +32,8 @@ def test_client_can_sell_currency(mock: FlaskClient):
             updated = expected[sym] - sell
             assert getattr(user, sym) == updated
             expected[sym] = updated
+
+# negative tests
+def test_invalid_methods(mock: FlaskClient):
+    print('test_invalid_methods')
+    assets = fill_mock()
